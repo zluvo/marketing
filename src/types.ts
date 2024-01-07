@@ -2,6 +2,9 @@ export type Storage = {
   set: (name: string, value: string) => void;
   get: (name: string) => string | undefined;
 };
+export type InteractionsArguments = {
+  amount: number;
+};
 export type StageStartArguments = {
   start: string;
 };

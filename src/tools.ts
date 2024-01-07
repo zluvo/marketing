@@ -1,9 +1,9 @@
 import Metrics from "./metrics";
+import { stages } from "./stages";
 import type {
   Storage,
   FlagArguments,
   ProfileArguments,
-  StageStartArguments,
   StageUpdateArguments,
 } from "./types";
 import user from "./user";
@@ -12,22 +12,22 @@ export const tools = {
   /**
    * Read and write the number of interactions a user has
    */
-  interactions: function (storage: Storage) {
+  interactions(storage: Storage) {
     return user(storage).interactions;
   },
   /**
    * Read and write what stage a user is at
    */
-  stage: function (storage: Storage) {
+  stage(storage: Storage) {
     return {
-      read: function () {
+      read() {
         return user(storage).stage.read();
       },
-      start: function (args: StageStartArguments) {
+      start() {
         Metrics.users += 1;
-        user(storage).stage.update(args.start);
+        user(storage).stage.update(stages.start);
       },
-      update: function (args: StageUpdateArguments) {
+      update(args: StageUpdateArguments) {
         user(storage).stage.update(args.next);
       },
     };
@@ -35,13 +35,13 @@ export const tools = {
   /**
    * Simple time-based feature flag
    */
-  flag: function (args: FlagArguments) {
+  flag(args: FlagArguments) {
     return new Date() >= args.date;
   },
   /**
    * Based on a user's interactions, assign them a profile
    */
-  profile: function (cookies: Storage, args: ProfileArguments) {
+  profile(cookies: Storage, args: ProfileArguments) {
     return user(cookies).profile.read(args);
   },
   /**
@@ -51,7 +51,7 @@ export const tools = {
     /**
      * Metrics for all users on an application scale
      */
-    global: function () {
+    global() {
       return {
         /**
          * Interaction metrics for all users
@@ -69,7 +69,7 @@ export const tools = {
     /**
      * Metrics for the curreent user
      */
-    user: function (storage: Storage) {
+    user(storage: Storage) {
       const currentInteractions = user(storage).interactions.read();
       return {
         /**

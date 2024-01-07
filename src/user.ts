@@ -1,9 +1,6 @@
 import Metrics from "./metrics";
-import type { Storage } from "./types";
-
-type ProfileArguments = {
-  [profile: string]: number;
-};
+import { stages } from "./stages";
+import type { InteractionsArguments, ProfileArguments, Storage } from "./types";
 
 export default function user(storage: Storage) {
   const ZLUVO_INTERACTIONS = "zluvo-interactions";
@@ -14,18 +11,26 @@ export default function user(storage: Storage) {
       read() {
         return Number(storage.get(ZLUVO_INTERACTIONS)) || 0;
       },
-      increment() {
-        Metrics.interactions += 1;
+      update(args: InteractionsArguments) {
+        Metrics.interactions += args.amount;
         const current = this.read();
-        storage.set(ZLUVO_INTERACTIONS, String(current + 1));
-        return current + 1;
+        storage.set(ZLUVO_INTERACTIONS, String(current + args.amount));
+        return current + args.amount;
+      },
+      increment() {
+        return this.update({
+          amount: 1,
+        });
       },
     },
     profile: {
       read(args: ProfileArguments) {
         const current = user(storage).interactions.read();
         const profiles = Object.entries(args);
-        for (const profile of profiles) {
+        const sortedProfiles: [string, number][] = profiles.sort(
+          (a, b) => b[1] - a[1]
+        );
+        for (const profile of sortedProfiles) {
           if (current >= profile[1]) {
             return profile[0];
           }
@@ -34,10 +39,8 @@ export default function user(storage: Storage) {
       },
     },
     stage: {
-      read() {
-        const current = storage.get(ZLUVO_STAGE);
-        if (!current) throw new Error("Stage has not be started");
-        return current;
+      read(): "START" | string {
+        return storage.get(ZLUVO_STAGE) || stages.start;
       },
       update(next: string) {
         storage.set(ZLUVO_STAGE, next);
